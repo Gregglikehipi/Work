@@ -12,7 +12,7 @@ class Parser:
         return BeautifulSoup(etree.tostring(result[0]), 'html.parser')
 
     def get_info(self, html, num):
-        #try:
+        try:
             list = []
             html = html.find('div', class_="wrapper")
             list.append(self.get_info_normal(self.xPath(html, "Общая информация")))
@@ -23,8 +23,9 @@ class Parser:
             with open(f"./in/{num}.json", "w", encoding="UTF-8") as outfile:
                 for chunk in json.JSONEncoder(ensure_ascii=False, indent=4).iterencode(list):
                     outfile.write(chunk)
-        #except:
-            #print("NO")
+            return 1
+        except:
+            return 0
 
     def clean(self, line):
         line = line.strip()
@@ -79,11 +80,14 @@ class Parser:
         info = f'{{"{head}" : {{}}}}'
         info = json.loads(info)
         for i in html.find_all('section'):
-            name = i.find('span', class_="section__title").text
-            name = self.clean(name)
-            data = i.find('span', class_="section__info").text
-            data = self.clean(data)
-            print(name, data)
-            info[head][name] = data
+            try:
+                name = i.find('span', class_="section__title").text
+                name = self.clean(name)
+                data = i.find('span', class_="section__info").text
+                data = self.clean(data)
+                print(name, data)
+                info[head][name] = data
+            except:
+                print("oof")
         print(info)
         return info
