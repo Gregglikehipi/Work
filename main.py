@@ -35,10 +35,24 @@ def send_text(message):
     if check_file:
         with open(path) as json_file:
             data = json.load(json_file)
+            price = ''
+            worker = ''
+            if "Организация" in data["Информация о поставщиках"]:
+                for i in data["Информация о поставщиках"]["Организация"]:
+                    worker = worker + i + "\n"
+            #if "Организация" in data["Информация о поставщиках"]:
+            #    worker = data["Информация о поставщиках"]["Организация"][0]
+            if "Цена контракта" in data["Общие данные"]:
+                price = data["Общие данные"]["Цена контракта"]
+
+
+
             bot.send_message(message.chat.id, f'Контракт:\n'
-                                              f'Номер контракта: {data[0]["Общая информация"]["Реестровый номер контракта"]}\n'
-                                              f'Статус: {data[0]["Общая информация"]["Статус контракта"]}\n'
-                                              f'Заказчик: {data[1]["Информация о заказчике"]["Полное наименование заказчика"]}\n'
+                                              f'Номер контракта: {data["Общая информация"]["Реестровый номер контракта"]}\n'
+                                              f'Статус: {data["Общая информация"]["Статус контракта"]}\n'
+                                              f'Цена: {price}\n'
+                                              f'Заказчик: {data["Информация о заказчике"]["Полное наименование заказчика"]}\n'
+                                              f'Поставщик: {worker}'
                              )
     else:
         if download_file(int(message.text)) == 1:
@@ -60,7 +74,8 @@ def send_file(message):
             bot.send_document(chat_id=message.chat.id, document=file)
     else:
         if download_file(int(message.text)) == 1:
-            bot.send_message(message.chat.id, 'Вы выгрузили контракт. Повторите запрос, чтобы получить данные')
+            with open(path, 'rb') as file:
+                bot.send_document(chat_id=message.chat.id, document=file)
         else:
             bot.send_message(message.chat.id, 'Контракт не получилось выгрузить')
 
