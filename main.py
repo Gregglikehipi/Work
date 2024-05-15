@@ -4,6 +4,7 @@ import os.path
 from logic import download_file
 import json
 
+
 @bot.message_handler(commands=["start"])
 def handle_role_selection(message):
     bot.send_message(message.chat.id, 'Есть 9 команд:\n'
@@ -13,21 +14,25 @@ def handle_role_selection(message):
                                       '/getFile получить получить полную информацию контракта по номеру\n'
 )
 
+
 @bot.message_handler(commands=["load"])
 def get_text_command(message):
     bot.send_message(message.chat.id, 'Введите номер контракта')
-    bot.register_next_step_handler(message, send_text)
+    bot.register_next_step_handler(message, load_text)
 
-def send_text(message):
+
+def load_text(message):
     if download_file(int(message.text)) == 1:
         bot.send_message(message.chat.id, 'Вы выгрузили контракт. Повторите запрос, чтобы получить данные')
     else:
         bot.send_message(message.chat.id, 'Контракт не получилось выгрузить')
 
+
 @bot.message_handler(commands=["getText"])
 def get_text_command(message):
     bot.send_message(message.chat.id, 'Введите номер контракта')
     bot.register_next_step_handler(message, send_text)
+
 
 def send_text(message):
     path = f'./in/{int(message.text)}.json'
@@ -40,12 +45,10 @@ def send_text(message):
             if "Организация" in data["Информация о поставщиках"]:
                 for i in data["Информация о поставщиках"]["Организация"]:
                     worker = worker + i + "\n"
-            #if "Организация" in data["Информация о поставщиках"]:
-            #    worker = data["Информация о поставщиках"]["Организация"][0]
+            if "Максимальное значение цены контракта" in data["Общие данные"]:
+                price = data["Общие данные"]["Максимальное значение цены контракта"]
             if "Цена контракта" in data["Общие данные"]:
                 price = data["Общие данные"]["Цена контракта"]
-
-
 
             bot.send_message(message.chat.id, f'Контракт:\n'
                                               f'Номер контракта: {data["Общая информация"]["Реестровый номер контракта"]}\n'
@@ -56,14 +59,34 @@ def send_text(message):
                              )
     else:
         if download_file(int(message.text)) == 1:
-            bot.send_message(message.chat.id, 'Вы выгрузили контракт. Повторите запрос, чтобы получить данные')
+            with open(path) as json_file:
+                data = json.load(json_file)
+                price = ''
+                worker = ''
+                if "Организация" in data["Информация о поставщиках"]:
+                    for i in data["Информация о поставщиках"]["Организация"]:
+                        worker = worker + i + "\n"
+                if "Максимальное значение цены контракта" in data["Общие данные"]:
+                    price = data["Общие данные"]["Максимальное значение цены контракта"]
+                if "Цена контракта" in data["Общие данные"]:
+                    price = data["Общие данные"]["Цена контракта"]
+
+                bot.send_message(message.chat.id, f'Контракт:\n'
+                                                  f'Номер контракта: {data["Общая информация"]["Реестровый номер контракта"]}\n'
+                                                  f'Статус: {data["Общая информация"]["Статус контракта"]}\n'
+                                                  f'Цена: {price}\n'
+                                                  f'Заказчик: {data["Информация о заказчике"]["Полное наименование заказчика"]}\n'
+                                                  f'Поставщик: {worker}'
+                                 )
         else:
             bot.send_message(message.chat.id, 'Контракт не получилось выгрузить')
+
 
 @bot.message_handler(commands=["getFile"])
 def get_file_command(message):
     bot.send_message(message.chat.id, 'Введите номер контракта')
     bot.register_next_step_handler(message, send_file)
+
 
 def send_file(message):
     path = f'./in/{int(message.text)}.json'
@@ -79,21 +102,10 @@ def send_file(message):
         else:
             bot.send_message(message.chat.id, 'Контракт не получилось выгрузить')
 
+
 while True:
     try:
         bot.polling()
     except Exception as e:
         print(f"An error occurred: {e}")
         time.sleep(5)
-
-"""
-print("hi")
-num = 2352502347623000268
-crawler = Crawler()
-parser = Parser()
-link = f'https://zakupki.gov.ru/epz/contract/contractCard/common-info.html?reestrNumber={num}'
-print(link)
-flag = parser.get_info(crawler.get_html(link), num)
-"""
-
-
